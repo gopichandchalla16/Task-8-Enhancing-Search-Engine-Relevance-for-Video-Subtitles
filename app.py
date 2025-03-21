@@ -1,11 +1,8 @@
 import streamlit as st
 import chromadb
 
-import chromadb
-
 # Initialize ChromaDB with persistent storage
-client = chromadb.PersistentClient(path="vectordb")  # Saves embeddings to 'vectordb' directory
-# Retrieve or create a collection for subtitles
+client = chromadb.PersistentClient(path="vectordb")  # Saves embeddings in 'vectordb'
 collection = client.get_or_create_collection(name="subtitle_sem")
 
 # Streamlit Page Config
@@ -30,7 +27,7 @@ set_style()
 
 # Page Header
 st.title('ShowFinder 🔍')
-st.subheader('Say goodbye to endless scrolling and decision fatigue 😫')
+st.subheader('Find your favorite subtitles instantly!')
 
 # Search Input
 query_text = st.text_input('Enter your query:', key="search_query")
@@ -41,15 +38,19 @@ def similar_title(query_text):
         return []  # Return empty list if query is blank
     
     try:
+        # Convert text query to vector for search
         result = collection.query(
             query_texts=[query_text],
             include=["metadatas", "distances"],
             n_results=10
         )
+
+        # Extract search results
         ids = result.get('ids', [[]])[0]
         distances = result.get('distances', [[]])[0]
         metadatas = result.get('metadatas', [[]])[0]
 
+        # Ensure metadata exists for sorting
         sorted_data = sorted(zip(metadatas, ids, distances), key=lambda x: x[2], reverse=True)
         return sorted_data
 
@@ -62,7 +63,7 @@ if query_text:
     result_data = similar_title(query_text)
     
     if result_data:
-        st.success('Here are the most relevant subtitle names:')
+        st.success('Here are the most relevant subtitles:')
         for metadata, ids, distance in result_data:
             subtitle_name = metadata.get('subtitle_name', 'Unknown')
             subtitle_id = metadata.get('subtitle_id', '')
